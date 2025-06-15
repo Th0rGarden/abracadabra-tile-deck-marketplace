@@ -1,5 +1,46 @@
 [
   {
+    "author": "Jane Doe",
+    "name": "Daily Notes Power Deck",
+    "description": "A simple deck with commands for creating and navigating daily, weekly, and monthly notes.",
+    "rows": 1,
+    "columns": 4,
+    "tiles": [
+      {
+        "rowIndex": 0,
+        "colIndex": 0,
+        "type": "command",
+        "commandId": "daily-notes:open-daily-note",
+        "name": "Today's Note",
+        "icon": "calendar"
+      },
+      {
+        "rowIndex": 0,
+        "colIndex": 1,
+        "type": "command",
+        "commandId": "daily-notes:open-previous-daily-note",
+        "name": "Previous Day",
+        "icon": "arrow-left"
+      },
+      {
+        "rowIndex": 0,
+        "colIndex": 2,
+        "type": "command",
+        "commandId": "daily-notes:open-next-daily-note",
+        "name": "Next Day",
+        "icon": "arrow-right"
+      },
+      {
+        "rowIndex": 0,
+        "colIndex": 3,
+        "type": "command",
+        "commandId": "calendar:open-calendar-view",
+        "name": "Calendar",
+        "icon": "calendar-days"
+      }
+    ]
+  },
+  {
     "author": "testerAuthor",
     "columns": 13,
     "description": "Imported from the Abracadabra plugin's Command Module.",
