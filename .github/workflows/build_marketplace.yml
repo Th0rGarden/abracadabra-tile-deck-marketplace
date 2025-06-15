@@ -13,7 +13,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     
-    # FIX #1: Grant write permissions to the job to allow pushing changes.
     permissions:
       contents: write
 
@@ -21,10 +20,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # *** THIS IS THE FIX ***
+      # Changed from @v18 to @v4, which is a valid major version tag for this action.
       - name: Setup Node.js
-        uses: actions/setup-node@v18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18' # We still specify version 18 here.
 
-      # FIX #2: Install jq, a command-line JSON processor.
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
