@@ -5,19 +5,28 @@ on:
     branches:
       - main # Or 'master', whichever is your default branch
     paths:
-      - 'published_decks/**' # Trigger on changes in this folder
-      - '.github/workflows/build_marketplace.yml' # Or on changes to the workflow itself
-  workflow_dispatch: # Allows manual triggering
+      - 'published_decks/**'
+      - '.github/workflows/build_marketplace.yml'
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    
+    # FIX #1: Grant write permissions to the job to allow pushing changes.
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Setup Node.js
         uses: actions/setup-node@v18
+
+      # FIX #2: Install jq, a command-line JSON processor.
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Build marketplace.json
         id: build
