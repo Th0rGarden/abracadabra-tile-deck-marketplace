@@ -1,0 +1,64 @@
+name: Build Marketplace JSON
+
+on:
+  push:
+    branches:
+      - main # Or 'master', whichever is your default branch
+    paths:
+      - 'published_decks/**' # Trigger on changes in this folder
+      - '.github/workflows/build_marketplace.yml' # Or on changes to the workflow itself
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v18
+
+      - name: Build marketplace.json
+        id: build
+        run: |
+          DECKS_DIR="published_decks"
+          OUTPUT_FILE="marketplace.json"
+          
+          if [ ! -d "$DECKS_DIR" ] || [ -z "$(ls -A $DECKS_DIR)" ]; then
+            echo "[]" > $OUTPUT_FILE
+            echo "No decks in $DECKS_DIR. Created empty marketplace file."
+          else
+            echo "[" > $OUTPUT_FILE
+            FIRST=true
+            for file in $(find $DECKS_DIR -name '*.json' | sort); do
+              if [ "$FIRST" = false ]; then
+                echo "," >> $OUTPUT_FILE
+              fi
+              # Validate JSON before appending
+              if jq -e . "$file" > /dev/null; then
+                cat "$file" >> $OUTPUT_FILE
+                FIRST=false
+              else
+                echo "Skipping invalid JSON file: $file" >&2
+              fi
+            done
+            echo "" >> $OUTPUT_FILE
+            echo "]" >> $OUTPUT_FILE
+          fi
+          
+          echo "Marketplace file built successfully."
+          cat $OUTPUT_FILE
+
+      - name: Commit and push if changed
+        run: |
+          git config --global user.name 'Marketplace Bot'
+          git config --global user.email 'bot@users.noreply.github.com'
+          git add marketplace.json
+          # Commit only if there are changes
+          if ! git diff --staged --quiet; then
+            git commit -m "Automated marketplace build"
+            git push
+          else
+            echo "No changes to marketplace.json. Nothing to commit."
+          fi
