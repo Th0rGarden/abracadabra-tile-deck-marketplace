@@ -3,7 +3,7 @@ name: Build Marketplace JSON
 on:
   push:
     branches:
-      - main # Or 'master', whichever is your default branch
+      - main # Or 'master'
     paths:
       - 'published_decks/**'
       - '.github/workflows/build_marketplace.yml'
@@ -12,7 +12,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
     permissions:
       contents: write
 
@@ -20,12 +19,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # *** THIS IS THE FIX ***
-      # Changed from @v18 to @v4, which is a valid major version tag for this action.
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18' # We still specify version 18 here.
+          node-version: '18'
 
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
@@ -36,37 +33,25 @@ jobs:
           DECKS_DIR="published_decks"
           OUTPUT_FILE="marketplace.json"
           
-          if [ ! -d "$DECKS_DIR" ] || [ -z "$(ls -A $DECKS_DIR)" ]; then
+          # Use jq to safely combine all .json files in the directory into a single array
+          # The -s (--slurp) flag reads all JSON objects into a single array
+          if [ -d "$DECKS_DIR" ] && [ -n "$(ls -A $DECKS_DIR/*.json 2>/dev/null)" ]; then
+            jq -s '.' $DECKS_DIR/*.json > $OUTPUT_FILE
+            echo "Marketplace file built successfully from $(ls -1 $DECKS_DIR/*.json | wc -l) decks."
+          else
             echo "[]" > $OUTPUT_FILE
             echo "No decks in $DECKS_DIR. Created empty marketplace file."
-          else
-            echo "[" > $OUTPUT_FILE
-            FIRST=true
-            for file in $(find $DECKS_DIR -name '*.json' | sort); do
-              if [ "$FIRST" = false ]; then
-                echo "," >> $OUTPUT_FILE
-              fi
-              # Validate JSON before appending
-              if jq -e . "$file" > /dev/null; then
-                cat "$file" >> $OUTPUT_FILE
-                FIRST=false
-              else
-                echo "Skipping invalid JSON file: $file" >&2
-              fi
-            done
-            echo "" >> $OUTPUT_FILE
-            echo "]" >> $OUTPUT_FILE
           fi
           
-          echo "Marketplace file built successfully."
+          echo "--- Generated marketplace.json content ---"
           cat $OUTPUT_FILE
+          echo "----------------------------------------"
 
       - name: Commit and push if changed
         run: |
           git config --global user.name 'Marketplace Bot'
           git config --global user.email 'bot@users.noreply.github.com'
           git add marketplace.json
-          # Commit only if there are changes
           if ! git diff --staged --quiet; then
             git commit -m "Automated marketplace build"
             git push
